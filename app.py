@@ -13,6 +13,8 @@ def carregar_planilha():
 def buscar_atendente(numero: str):
     df = carregar_planilha()
     numero = numero.replace("+", "").strip()
+    print(f"Buscando numero: {numero}")
+    print(f"Numeros no CSV: {df['numero_whatsapp'].tolist()}")
     resultado = df[df["numero_whatsapp"] == numero]
     if resultado.empty:
         resultado = df[df["numero_whatsapp"] == "55" + numero]
@@ -28,7 +30,9 @@ def buscar():
         numero = data.get("numero", "")
         contato = buscar_atendente(numero)
         if contato is None:
+            print("Retornando: padrao")
             return "padrao", 200
+        print(f"Retornando: {contato['atendente_id']}")
         return contato["atendente_id"], 200
     except Exception as e:
         print(f"Erro: {e}")
