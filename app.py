@@ -3,7 +3,6 @@ import pandas as pd
 import os
 
 app = Flask(__name__)
-
 PLANILHA_PATH = "contatos.csv"
 
 def carregar_planilha():
@@ -16,6 +15,8 @@ def buscar_atendente(numero: str):
     numero = numero.replace("+", "").strip()
     resultado = df[df["numero_whatsapp"] == numero]
     if resultado.empty:
+        resultado = df[df["numero_whatsapp"] == "55" + numero]
+    if resultado.empty:
         return None
     return resultado.iloc[0].to_dict()
 
@@ -23,16 +24,12 @@ def buscar_atendente(numero: str):
 def buscar():
     data = request.json
     print("Payload recebido:", data)
-
     try:
         numero = data.get("numero", "")
         contato = buscar_atendente(numero)
-
         if contato is None:
             return "padrao", 200
-
         return contato["atendente_id"], 200
-
     except Exception as e:
         print(f"Erro: {e}")
         return "padrao", 500
