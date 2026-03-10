@@ -1,26 +1,59 @@
-from flask import Flask, request, jsonify
-import pandas as pd
+from flask import Flask, request
+import requests
 import os
 
 app = Flask(__name__)
-PLANILHA_PATH = "contatos.csv"
 
-def carregar_planilha():
-    df = pd.read_csv(PLANILHA_PATH, dtype=str)
-    df["numero_whatsapp"] = df["numero_whatsapp"].str.replace(r"\D", "", regex=True)
-    return df
+MONDAY_TOKEN = os.environ.get("MONDAY_TOKEN")
+BOARD_ID = 18403293983
 
 def buscar_atendente(numero: str):
-    df = carregar_planilha()
     numero = numero.replace("+", "").strip()
-    print(f"Buscando numero: {numero}")
-    print(f"Numeros no CSV: {df['numero_whatsapp'].tolist()}")
-    resultado = df[df["numero_whatsapp"] == numero]
-    if resultado.empty:
-        resultado = df[df["numero_whatsapp"] == "55" + numero]
-    if resultado.empty:
-        return None
-    return resultado.iloc[0].to_dict()
+    
+    query = """
+    query {
+        boards(ids: %d) {
+            items_page(limit: 500) {
+                items {
+                    column_values {
+                        column {
+                            title
+                        }
+                        text
+                    }
+                }
+            }
+        }
+    }
+    """ % BOARD_ID
+
+    headers = {
+        "Authorization": MONDAY_TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(
+        "https://api.monday.com/v2",
+        json={"query": query},
+        headers=headers
+    )
+
+    data = response.json()
+    items = data["data"]["boards"][0]["items_page"]["items"]
+
+    for item in items:
+        telefone = ""
+        email = ""
+        for col in item["column_values"]:
+            if col["column"]["title"].lower() == "telefone":
+                telefone = col["text"].replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+            if col["column"]["title"].lower() == "e-mail ai":
+                email = col["text"]
+        if telefone == numero or telefone == "55" + numero:
+            print(f"Encontrado! Retornando: {email}")
+            return email
+
+    return None
 
 @app.route("/buscar", methods=["POST"])
 def buscar():
@@ -28,12 +61,11 @@ def buscar():
     print("Payload recebido:", data)
     try:
         numero = data.get("numero", "")
-        contato = buscar_atendente(numero)
-        if contato is None:
+        email = buscar_atendente(numero)
+        if email is None:
             print("Retornando: padrao")
             return "padrao", 200
-        print(f"Retornando: {contato['atendente_id']}")
-        return contato["atendente_id"], 200
+        return email, 200
     except Exception as e:
         print(f"Erro: {e}")
         return "padrao", 500
