@@ -2,6 +2,26 @@
 
 Serviço HTTP em Flask que roteia conversas de WhatsApp recebidas via Zenvia para o atendente correto, consultando um board do Monday.com pelo número do remetente.
 
+## Problem
+
+A Zenvia recebe as mensagens de WhatsApp num número único, mas cada conversa precisa cair com o atendente certo — e essa relação número → atendente vive no Monday.com, não na Zenvia.
+
+## Solution
+
+Um serviço HTTP simples que a Zenvia consulta a cada mensagem recebida: ele busca o número no board do Monday.com e devolve o e-mail do atendente responsável, que a Zenvia usa pra rotear a conversa.
+
+## Architecture
+
+```text
+WhatsApp
+   |
+Zenvia (webhook)
+   |
+zenvia-roteador  --  Monday.com API (busca por telefone)
+   |
+e-mail do atendente (roteamento na Zenvia)
+```
+
 ## Como funciona
 
 1. A Zenvia recebe uma mensagem de WhatsApp e chama `POST /buscar` com o número do remetente.
