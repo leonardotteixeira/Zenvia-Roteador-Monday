@@ -33,3 +33,7 @@ Procfile pronto para Heroku (`gunicorn app:app`). Requer a variável de ambiente
 ## Stack
 
 Python 3, Flask, Gunicorn, API do Monday.com (GraphQL).
+
+## Status
+
+Ferramenta interna, construída para resolver uma necessidade pontual de roteamento de atendimento no trabalho — não é uma ferramenta genérica de integração Zenvia/Monday, é específica para esse fluxo. Mantida aqui como parte do meu portfólio.
